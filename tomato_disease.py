@@ -49,33 +49,7 @@ def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, l
 
     return last_loss
 
-
-def main():
-    data_path = os.path.realpath("PlantVillage")
-    labels_name = [name[0].split("\\")[-1]  for name in os.walk(data_path) 
-                if "Tomato" in name[0]]
-    directory_paths = [os.path.join(data_path, name) for name in labels_name]
-
-    num_classes = len(labels_name)
-    model = torch.hub.load('pytorch/vision:v0.10.0', 'alexnet', pretrained=True)
-    data_transforms = transforms.Compose([
-        transforms.Resize((224,224)),             # resize the input to 224x224
-        transforms.ToTensor(),              # put the input to tensor format
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # normalize the input
-        # the normalization is based on images from ImageNet
-    ])
-    dataset = ImageFolder(root=data_path, transform=data_transforms)
-
-    train_size = int(0.66 * len(dataset))
-    test_size = len(dataset) - train_size
-
-    train_set, test_set = torch.utils.data.random_split(dataset, [train_size, test_size])
-
-    training_loader = DataLoader(train_set, batch_size=10, shuffle=True)
-    testing_loader = DataLoader(test_set, batch_size=10, shuffle=True)
-    # Initializing in a separate cell so we can easily add more epochs to the same run
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    writer = SummaryWriter('runs/plant_trainer_{}'.format(timestamp))
+def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp):
     epoch_number = 0
 
     EPOCHS = 5
@@ -87,7 +61,7 @@ def main():
 
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
-        avg_loss = train_one_epoch(epoch_number, writer, training_loader)
+        avg_loss = train_one_epoch(epoch, writer, training_loader, model, optimizer, loss_fn)
 
         # We don't need gradients on to do reporting
         model.train(False)
@@ -116,5 +90,38 @@ def main():
             torch.save(model.state_dict(), model_path)
 
         epoch_number += 1
+
+def main():
+
+    data_path = os.path.realpath("PlantVillage")
+    labels_name = [name[0].split("\\")[-1]  for name in os.walk(data_path) 
+                if "Tomato" in name[0]]
+    directory_paths = [os.path.join(data_path, name) for name in labels_name]
+
+    num_classes = len(labels_name)
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'alexnet', pretrained=True)
+    data_transforms = transforms.Compose([
+        transforms.Resize((224,224)),             # resize the input to 224x224
+        transforms.ToTensor(),              # put the input to tensor format
+        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # normalize the input
+        # the normalization is based on images from ImageNet
+    ])
+    loss_fn = torch.nn.CrossEntropyLoss()
+    optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
+    dataset = ImageFolder(root=data_path, transform=data_transforms)
+
+    train_size = int(0.66 * len(dataset))
+    test_size = len(dataset) - train_size
+
+    train_set, test_set = torch.utils.data.random_split(dataset, [train_size, test_size])
+
+    training_loader = DataLoader(train_set, batch_size=10, shuffle=True)
+    testing_loader = DataLoader(test_set, batch_size=10, shuffle=True)
+    # Initializing in a separate cell so we can easily add more epochs to the same run
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    writer = SummaryWriter('runs/plant_trainer_{}'.format(timestamp))
+    
+    train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp)
+
 if __name__ == "__main__":
     main()
