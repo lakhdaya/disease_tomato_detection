@@ -98,7 +98,7 @@ def main(model_name):
                 if "Tomato" in name[0]]
     directory_paths = [os.path.join(data_path, name) for name in labels_name]
 
-    model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet', pretrained=True)
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
     data_transforms = transforms.Compose([
         transforms.Resize(256),
         transforms.CenterCrop(224),
