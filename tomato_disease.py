@@ -91,12 +91,6 @@ def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, wri
 
     best_vloss = 1_000_000.
 
-    # move the input and model to GPU for speed if available
-    print("{} is available".format(torch.cuda.is_available()))
-    if torch.cuda.is_available():
-        print("gpu used")
-        model.to('cuda')
-
     for epoch in tqdm(range(EPOCHS)):
         print('EPOCH {}:'.format(epoch_number + 1))
 
@@ -152,6 +146,13 @@ def main(model_name):
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     dataset = ImageFolder(root=data_path, transform=data_transforms)
 
+
+    # move the input and model to GPU for speed if available
+    print("{} is available".format(torch.cuda.is_available()))
+    if torch.cuda.is_available():
+        print("gpu used")
+        input_batch = input_batch.to('cuda')    
+        model.to('cuda')
     train_size = int(0.66 * len(dataset))
     test_size = len(dataset) - train_size
 
