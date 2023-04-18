@@ -59,7 +59,7 @@ def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, l
     # index and do some intra-epoch reporting
     for i, data in tqdm(enumerate(training_loader), total = len(training_loader)):
         # Every data instance is an input + label pair
-        inputs, labels = data
+        inputs, labels = data.to('cuda')
         # Zero your gradients for every batch!
         optimizer.zero_grad()
 
@@ -150,8 +150,7 @@ def main(model_name):
     # move the input and model to GPU for speed if available
     print("{} is available".format(torch.cuda.is_available()))
     if torch.cuda.is_available():
-        print("gpu used")
-        dataset = dataset.to('cuda')    
+        print("gpu used")   
         model.to('cuda')
     train_size = int(0.66 * len(dataset))
     test_size = len(dataset) - train_size
