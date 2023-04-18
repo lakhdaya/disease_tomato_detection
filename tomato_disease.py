@@ -105,6 +105,8 @@ def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, wri
         running_vloss = 0.0
         for i, vdata in enumerate(testing_loader):
             vinputs, vlabels = vdata
+            if use_cuda:
+                vinputs, vlabels = vinputs.cuda(), vlabels.cuda()
             voutputs = model(vinputs)
             vloss = loss_fn(voutputs, vlabels)
             running_vloss += vloss
