@@ -59,7 +59,7 @@ def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, l
     # index and do some intra-epoch reporting
     for i, data in tqdm(enumerate(training_loader), total = len(training_loader)):
         # Every data instance is an input + label pair
-        inputs, labels = data.to('cuda')
+        inputs, labels = data
         # Zero your gradients for every batch!
         optimizer.zero_grad()
 
