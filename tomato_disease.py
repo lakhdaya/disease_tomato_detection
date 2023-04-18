@@ -91,7 +91,7 @@ def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, wri
 
         epoch_number += 1
 
-def main():
+def main(model_name):
 
     data_path = os.path.realpath("PlantVillage")
     labels_name = [name[0].split("\\")[-1]  for name in os.walk(data_path) 
@@ -122,6 +122,7 @@ def main():
     writer = SummaryWriter('runs/plant_trainer_{}'.format(timestamp))
     
     train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp)
-
+    torch.save("models/{}".format(model_name))
 if __name__ == "__main__":
-    main()
+    model_name = "test_model"
+    main(model_name)
