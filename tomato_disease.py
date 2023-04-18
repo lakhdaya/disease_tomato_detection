@@ -151,7 +151,7 @@ def main(model_name):
     print("{} is available".format(torch.cuda.is_available()))
     if torch.cuda.is_available():
         print("gpu used")   
-        model.to('cuda')
+        #model.to('cuda')
     train_size = int(0.66 * len(dataset))
     test_size = len(dataset) - train_size
 
