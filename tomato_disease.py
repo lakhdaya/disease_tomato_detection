@@ -122,7 +122,7 @@ def main(model_name):
     writer = SummaryWriter('runs/plant_trainer_{}'.format(timestamp))
     
     train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp)
-    torch.save("models/{}".format(model_name))
+    torch.save("models/{}".format(model_name), model)
 if __name__ == "__main__":
     model_name = "test_model"
     main(model_name)
