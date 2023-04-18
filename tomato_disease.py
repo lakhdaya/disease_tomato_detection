@@ -15,6 +15,30 @@ import torch.nn as nn
 from torchvision.datasets import ImageFolder
 from torch.utils.data import DataLoader
 
+import torch.nn as nn
+import torch.nn.functional as F
+
+# PyTorch models inherit from torch.nn.Module
+class GarmentClassifier(nn.Module):
+    def __init__(self):
+        super(GarmentClassifier, self).__init__()
+        self.conv1 = nn.Conv2d(1, 6, 5)
+        self.pool = nn.MaxPool2d(2, 2)
+        self.conv2 = nn.Conv2d(6, 16, 5)
+        self.fc1 = nn.Linear(16 * 4 * 4, 120)
+        self.fc2 = nn.Linear(120, 84)
+        self.fc3 = nn.Linear(84, 10)
+
+    def forward(self, x):
+        x = self.pool(F.relu(self.conv1(x)))
+        x = self.pool(F.relu(self.conv2(x)))
+        x = x.view(-1, 16 * 4 * 4)
+        x = F.relu(self.fc1(x))
+        x = F.relu(self.fc2(x))
+        x = self.fc3(x)
+        return x
+
+
 def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, loss_fn):
     running_loss = 0.
     last_loss = 0.
@@ -98,13 +122,12 @@ def main(model_name):
                 if "Tomato" in name[0]]
     directory_paths = [os.path.join(data_path, name) for name in labels_name]
 
-    model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
-    data_transforms = transforms.Compose([
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-    ])
+    #model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
+    model = GarmentClassifier()
+    data_transforms = transform = transforms.Compose(
+    [transforms.ToTensor(),
+    transforms.Normalize((0.5,), (0.5,))])
+    
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
     dataset = ImageFolder(root=data_path, transform=data_transforms)
