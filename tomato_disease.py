@@ -50,16 +50,17 @@ class LeNet(nn.Module):
         return num_features
 
 
-def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, loss_fn):
+def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, loss_fn, use_cuda=False):
     running_loss = 0.
     last_loss = 0.
 
     # Here, we use enumerate(training_loader) instead of
     # iter(training_loader) so that we can track the batch
     # index and do some intra-epoch reporting
-    for i, data in tqdm(enumerate(training_loader), total = len(training_loader)):
+    for i, (inputs, labels) in tqdm(enumerate(training_loader), total = len(training_loader)):
         # Every data instance is an input + label pair
-        inputs, labels = data
+        if use_cuda:
+            inputs, labels = inputs.cuda(), labels.cuda()
         # Zero your gradients for every batch!
         optimizer.zero_grad()
 
@@ -84,7 +85,7 @@ def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, l
 
     return last_loss
 
-def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp):
+def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp, use_cuda=False):
     epoch_number = 0
 
     EPOCHS = 5
@@ -96,7 +97,7 @@ def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, wri
 
         # Make sure gradient tracking is on, and do a pass over the data
         model.train(True)
-        avg_loss = train_one_epoch(epoch, writer, training_loader, model, optimizer, loss_fn)
+        avg_loss = train_one_epoch(epoch, writer, training_loader, model, optimizer, loss_fn, use_cuda)
 
         # We don't need gradients on to do reporting
         model.train(False)
@@ -151,7 +152,7 @@ def main(model_name):
     print("{} is available".format(torch.cuda.is_available()))
     if torch.cuda.is_available():
         print("gpu used")   
-        #model.to('cuda')
+        model.to('cuda')
     train_size = int(0.66 * len(dataset))
     test_size = len(dataset) - train_size
 
@@ -164,7 +165,7 @@ def main(model_name):
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     writer = SummaryWriter('runs/plant_trainer_{}'.format(timestamp))
     
-    train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp)
+    train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp, torch.cuda.is_available())
     torch.save("models/{}".format(model_name), model)
 
 def test_model(model):
