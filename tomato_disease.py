@@ -19,24 +19,35 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # PyTorch models inherit from torch.nn.Module
-class GarmentClassifier(nn.Module):
+
+class LeNet(nn.Module):
     def __init__(self):
-        super(GarmentClassifier, self).__init__()
-        self.conv1 = nn.Conv2d(3, 256, 256)
-        self.pool = nn.MaxPool2d(2, 2)
-        self.conv2 = nn.Conv2d(6, 16, 5)
-        self.fc1 = nn.Linear(16 * 4 * 4, 120)
-        self.fc2 = nn.Linear(120, 84)
-        self.fc3 = nn.Linear(84, 6)
+        super(LeNet, self).__init__()
+        # 3 input image channel (black & white), 6 output channels, 5x5 square convolution
+        # kernel
+        self.conv1 = torch.nn.Conv2d(3, 6, 5)
+        self.conv2 = torch.nn.Conv2d(6, 16, 3)
+        # an affine operation: y = Wx + b
+        self.fc1 = torch.nn.Linear(16 * 6 * 6, 10)  # 6*6 from image dimension
+        self.fc2 = torch.nn.Linear(120, 84)
+        self.fc3 = torch.nn.Linear(84, 10)
 
     def forward(self, x):
-        x = self.pool(F.relu(self.conv1(x)))
-        x = self.pool(F.relu(self.conv2(x)))
-        x = x.view(-1, 16 * 4 * 4)
+        # Max pooling over a (2, 2) window
+        x = F.max_pool2d(F.relu(self.conv1(x)), (2, 2))
+        # If the size is a square you can only specify a single number
+        x = F.max_pool2d(F.relu(self.conv2(x)), 2)
+        x = x.view(-1, self.num_flat_features(x))
         x = F.relu(self.fc1(x))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
         return x
+    def num_flat_features(self, x):
+        size = x.size()[1:]  # all dimensions except the batch dimension
+        num_features = 1
+        for s in size:
+            num_features *= s
+        return num_features
 
 
 def train_one_epoch(epoch_index, tb_writer, training_loader, model, optimizer, loss_fn):
@@ -80,6 +91,12 @@ def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, wri
 
     best_vloss = 1_000_000.
 
+    # move the input and model to GPU for speed if available
+    print("{} is available".format(torch.cuda.is_available()))
+    if torch.cuda.is_available():
+        print("gpu used")
+        model.to('cuda')
+
     for epoch in tqdm(range(EPOCHS)):
         print('EPOCH {}:'.format(epoch_number + 1))
 
@@ -122,12 +139,14 @@ def main(model_name):
                 if "Tomato" in name[0]]
     directory_paths = [os.path.join(data_path, name) for name in labels_name]
 
-    #model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', pretrained=True)
-    model = GarmentClassifier()
-    data_transforms = transform = transforms.Compose(
-    [transforms.Resize(256),
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet121', weights="DenseNet121_Weights.DEFAULT")
+
+    data_transforms = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
     transforms.ToTensor(),
-    transforms.Normalize((0.5,), (0.5,))])
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+])
     
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
