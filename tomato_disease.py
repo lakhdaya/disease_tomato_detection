@@ -74,7 +74,7 @@ def train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, wri
             running_vloss += vloss
 
         avg_vloss = running_vloss / (i + 1)
-        print('LOSS train {} valid {}'.format(avg_loss, avg_vloss))
+        print('LOSS train {} valid {}\n'.format(avg_loss, avg_vloss))
 
         # Log the running loss averaged per batch
         # for both training and validation
@@ -98,7 +98,6 @@ def main(model_name):
                 if "Tomato" in name[0]]
     directory_paths = [os.path.join(data_path, name) for name in labels_name]
 
-    num_classes = len(labels_name)
     model = torch.hub.load('pytorch/vision:v0.10.0', 'alexnet', pretrained=True)
     data_transforms = transforms.Compose([
         transforms.Resize((224,224)),             # resize the input to 224x224
@@ -118,11 +117,16 @@ def main(model_name):
     training_loader = DataLoader(train_set, batch_size=10, shuffle=True)
     testing_loader = DataLoader(test_set, batch_size=10, shuffle=True)
     # Initializing in a separate cell so we can easily add more epochs to the same run
+    
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     writer = SummaryWriter('runs/plant_trainer_{}'.format(timestamp))
     
     train_epochs(model, loss_fn, optimizer, training_loader, testing_loader, writer, timestamp)
     torch.save("models/{}".format(model_name), model)
+
+def test_model(model):
+    None
+
 if __name__ == "__main__":
     model_name = "test_model"
     main(model_name)
