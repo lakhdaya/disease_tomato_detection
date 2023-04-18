@@ -98,12 +98,12 @@ def main(model_name):
                 if "Tomato" in name[0]]
     directory_paths = [os.path.join(data_path, name) for name in labels_name]
 
-    model = torch.hub.load('pytorch/vision:v0.10.0', 'alexnet', pretrained=True)
+    model = torch.hub.load('pytorch/vision:v0.10.0', 'densenet', pretrained=True)
     data_transforms = transforms.Compose([
-        transforms.Resize((224,224)),             # resize the input to 224x224
-        transforms.ToTensor(),              # put the input to tensor format
-        transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])  # normalize the input
-        # the normalization is based on images from ImageNet
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
     ])
     loss_fn = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.SGD(model.parameters(), lr=0.001, momentum=0.9)
